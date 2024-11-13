@@ -1,0 +1,55 @@
+class packet;
+    rand bit error;
+    rand bit [3:0] op_code;
+    rand bit [7:0] a, b;
+    constraint op_code_val {
+        solve error before op_code;
+        if(error) {
+            op_code > 9;
+        }
+        else {
+            op_code <= 9;
+        }
+    }
+    constraint a_b_val {
+        soft a % 2 == 0;
+        b % 2 == 1;
+    }
+
+	constraint a_grt_b {
+        solve b before a;
+        a > b;
+    }
+    function void pre_randomize();
+        if(a_grt_b.constraint_mode())
+            $display("a_grt_b is enabled");
+        else
+            $display("a_grt_b is disabled");
+    endfunction
+
+    function void printf();
+        $display("Errpr = %0b, op_code = %0d, a = %0d, b = %0d", error, op_code, a, b);
+    endfunction
+endclass //packet
+module constraint_basic;
+    packet p;
+    initial begin
+        p = new;
+        p.randomize();
+        p.printf();
+
+
+        p.randomize() with {a % 2 == 1;};
+        p.printf();
+
+        // overriding constraint without using soft keyword
+        p.a_grt_b.constraint_mode(0);
+        p.randomize() with { b > a; };
+        p.printf();
+
+        // re-enabling constraint
+        p.a_grt_b.constraint_mode(1);
+        p.randomize();
+        p.printf();
+    end
+endmodule
