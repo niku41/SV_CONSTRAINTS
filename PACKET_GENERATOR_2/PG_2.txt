@@ -1,0 +1,69 @@
+class packet;
+    rand bit [1:0] pkt_type;
+    rand bit [5:0] length;
+    rand bit [7:0] header;
+    rand bit [7:0] payload [];
+    rand bit [7:0] checksum;
+
+    //constraint for pkt_type
+    constraint pkt_type_c {
+        pkt_type dist { [0:2] :/ 90, 3 :/ 10 };
+    }
+
+    // Constraint for header field
+    constraint header_c {
+        // header should be concatenation of pkt_type and length if pkt_type
+        // is not 3
+        (pkt_type != 3) -> header == {pkt_type, length};
+    }
+
+    //constraint for length
+    constraint length_c {
+        solve pkt_type before length;
+        (pkt_type == 0 || pkt_type == 3) -> length inside {[1:4], 8, 16};
+        (pkt_type == 1 || pkt_type == 2) -> length == 1;
+    }
+
+    // Constraint for payload field
+    constraint payload_c {
+        solve length, pkt_type before payload;
+        // payload size should be equal to length
+        payload.size() == length;
+        // payload values should depend on pkt_type
+        foreach (payload[i]) {
+            // If pkt_type is Data
+            if (pkt_type == 2'b00) {
+                payload[i] inside {[0:127]};
+            }
+            // If pkt_type is Command
+            else if (pkt_type == 2'b01) {
+                payload[i] inside {[128:255]};
+            }
+            // If pkt_type is Response
+            else if (pkt_type == 2'b10) {
+                payload[i] inside {[64:191]};
+            }
+            // If pkt_type is Invalid
+            else {
+                // payload values should be zero
+                payload[i] == 0;
+            }
+        }
+    }
+
+    function void post_randomize();
+        $display("Packet after randomization:");
+        $display("pkt_type = %0d, length = %0d, header = %h, payload = %p\n", pkt_type, length, header, payload);
+    endfunction
+endclass
+
+module test;
+    packet pkt;
+    initial begin
+        pkt = new;
+        repeat(10) begin
+            pkt.randomize();
+        end
+    end
+endmodule
+          
