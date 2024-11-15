@@ -1,0 +1,32 @@
+class Fibonacci;
+    rand int unsigned intArray[]; // Declare intArray as a random dynamic array
+
+    constraint packet_cnstr {
+        intArray.size inside {[2:11]}; // Constrain the size of the dynamic array
+    }
+
+    function void post_randomize();
+        intArray[0] = 0;
+        intArray[1] = 1;
+        for (int kk = 2; kk < intArray.size; kk++) begin
+            intArray[kk] = intArray[kk - 1] + intArray[kk - 2]; // Fibonacci logic
+        end
+    endfunction: post_randomize
+endclass
+
+module tb_top;
+    initial begin
+        Fibonacci ff = new(); // Create one instance of the class
+        repeat (20) begin
+            if (ff.randomize()) begin
+                $write("intArray has %0d elements: ", ff.intArray.size);
+                for (int ii = 0; ii < ff.intArray.size; ii++) begin
+                    $write("%2d ", ff.intArray[ii]);
+                end
+                $display(); // Correct $display syntax
+            end else begin
+                $display("Randomization failed");
+            end
+        end
+    end
+endmodule
