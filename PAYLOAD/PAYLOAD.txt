@@ -1,0 +1,42 @@
+class Packet;
+
+
+ rand int payload[]; //dynamic array
+
+
+ constraint c1 {
+  payload.size() inside {[10:20]}; // 1
+  foreach (payload[kk])
+   payload[kk] inside {[1:100]}; // 2
+  unique{payload};              // 3
+ }
+
+
+endclass : Packet
+
+
+//=============================================================================
+// Part-II: Write a testbench to generate 5 (five) such packets.
+//=============================================================================
+
+
+module test;
+
+
+ initial begin
+   repeat (5) begin // generate 5 packets
+    Packet p1;
+    p1 = new();
+    if (p1.randomize()) begin
+      $write("payload has %0d elements: ", p1.payload.size());
+      foreach (p1.payload[ii])
+       $write("%2d ", p1.payload[ii]);
+      $display;
+    end else begin
+      $display("randomization failed");
+    end
+   end // repeat
+ end // initial
+
+
+endmodule
